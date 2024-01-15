@@ -1,5 +1,4 @@
 package main
-
 import (
 	"bytes"
 	"encoding/json"
@@ -8,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
 )
 
 const (
@@ -21,28 +21,38 @@ type TraumaResult struct {
 	Token  string `json:"token"`
 }
 
+
 func main() {
 	http.HandleFunc("/trauma", handleProcess)
 	fmt.Println("Server running at port :8088")
 	http.ListenAndServe(":8088", nil)
+
 }
 
 func handleProcess(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Метод не разрешен", http.StatusMethodNotAllowed)
+
+    if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Methods", "POST")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.WriteHeader(http.StatusOK)
 		return
 	}
+
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Methods", "POST")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	
 
 	var requestBody struct {
 		ID int `json:"id"`
 	}
-
+	fmt.Println("Server running at port :8088")
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		fmt.Println(r.Body)
 		http.Error(w, fmt.Sprintf("Ошибка при декодировании JSON: %s", err), http.StatusBadRequest)
 		return
 	}
-
-	fmt.Println(requestBody.ID)
 
 	w.WriteHeader(http.StatusOK)
 
@@ -50,9 +60,9 @@ func handleProcess(w http.ResponseWriter, r *http.Request) {
 		delay := 5
 		time.Sleep(time.Duration(delay) * time.Second)
 
-		result := "Проверка врача прошла успешно 1"
+		result := "Confirmed"
 		if rand.Intn(2) == 0 {
-			result = "Проверка врача прошла неуспешно 0"
+			result = "Rejected"
 		}
 
 		// Отправка результата на другой сервер
@@ -86,4 +96,5 @@ func handleProcess(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println("Ответ от сервера обновления:", resp.Status)
 	}()
+
 }
